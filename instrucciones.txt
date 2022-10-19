@@ -1,33 +1,72 @@
-APRENDER A COMBINAR BLOC_BUILDER CON BLOC_LISTENER
+APRENDER A GUARDAR EL ESTADO EN NUESTRO DISPOSITIVO
 ===================================================
 
-1. En el home_screen.dart, cortamos el listener y lo colocamos dentro del BlocBuilder y luego cambiamos el BlocBuilder
-por BlocConsumer:
+1. En el Pubspec.yaml agregamos las siguientes dependencias:
 
-child: Center(
-  child: BlocConsumer<CounterBloc, CounterState>(
-    listener: (context, state) {
-      if (state is IncrementState) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Successfully increased'),
-          duration: Duration(milliseconds: 300),
-        ));
-      } else if (state is DecrementState) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Successfully decreased'),
-          duration: Duration(milliseconds: 300),
-        ));
-      }
-    },
-    builder: (context, state) {
-      return Text(
-        'Counter value: ${state.counterValue}',
-        style: const TextStyle(
-            fontSize: 20, fontWeight: FontWeight.bold),
+  hydrated_bloc: ^8.1.0
+  path_provider: ^2.0.11
+
+2. hydrated storage hará llamadas nativas, por lo tanto necesitamos inicializar el Widget Bindings antes de
+que empecemos a construir nuestra app. De otro modo, nosotros no seríamos capaz de llamar el código nativo.
+En main.dart colocamos la siguiente línea dentro del main y de primera:
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+3. En el archivo bloc_imports exportamos el paquete hydrated_bloc:
+
+  export 'package:hydrated_bloc/hydrated_bloc.dart';
+
+4. Luego, debajo de la línea del punto 2, creamos una variable llamada storage. Tenemos que mostrar que su 
+directorio, que es el directorio de documentos de la aplicación. Obtendremos este directorio en el futuro, 
+por lo que necesitamos 'async' y 'await' aquí y también usamos HydratedBlocOverrides.RunZoned:
+
+  void main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    final storage = await HydratedStorage.build(
+        storageDirectory: await getApplicationDocumentsDirectory());
+
+    HydratedBlocOverrides.runZoned(() => runApp(const MyApp()), storage: storage);
+
+    Bloc.observer = MyBlocObserver();
+  }
+
+5. En el counter_state.dart, seleccionamos CounterState y con CTRL + punto seleccionamos Generate JSON serialization.
+Este viene de la extensión de vscode 'dart data class generator'. Borramos las líneas necesarias, quedando así:
+
+  class CounterState extends Equatable {
+    final int counterValue;
+    const CounterState({required this.counterValue});
+
+    @override
+    List<Object> get props => [counterValue];
+
+    Map<String, dynamic> toMap() {
+      return <String, dynamic>{
+        'counterValue': counterValue,
+      };
+    }
+
+    factory CounterState.fromMap(Map<String, dynamic> map) {
+      return CounterState(
+        counterValue: map['counterValue'] as int,
       );
-    },
-  ),
-)),
+    }
+  }
 
+6. Luego, nos vamos a counter_bloc.dart y la clase CounterBloc ya no va a extender de Bloc, sino de HydratedBloc, e
+imortamos bloc_imports.dart.
 
+Después implementamos los métodos que nos pide:
 
+  @override
+    CounterState? fromJson(Map<String, dynamic> json) {
+      return CounterState.fromMap(json);
+    }
+
+    @override
+    Map<String, dynamic>? toJson(CounterState state) {
+      return state.toMap();
+  }
+
+7. Cargamos la app en el celular y probar que ya guarda el estado anterior cuando se llama de nuevo la app.

@@ -2,13 +2,20 @@
 // import 'package:counter_app_bloc/bloc/mybloc_observer.dart';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'bloc/bloc_imports.dart';
 import 'screen/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final storage = await HydratedStorage.build(
+      storageDirectory: await getApplicationDocumentsDirectory());
+
+  HydratedBlocOverrides.runZoned(() => runApp(const MyApp()), storage: storage);
+
   Bloc.observer = MyBlocObserver();
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
