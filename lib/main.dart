@@ -7,6 +7,7 @@ import 'bloc/bloc_imports.dart';
 import 'screen/home_screen.dart';
 
 void main() {
+  Bloc.observer = MyBlocObserver();
   runApp(const MyApp());
 }
 

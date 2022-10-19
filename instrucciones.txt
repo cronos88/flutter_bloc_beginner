@@ -1,115 +1,50 @@
-UTILIZAR BLOC BUILDER
-=====================
+APRENDER A DEBUGEAR LOS ESTADOS
+================================
 
-1. Creamos un bloc llamado counter y colocamos los 3 archivos en una carpeta dentro de bloc/ llamada counter.
-2. En la carpeta bloc/ creamos un archivo llamado bloc_imports, para manejar las exportaciones que necesitemos de bloc.
-
-  export 'package:flutter_bloc/flutter_bloc.dart';
-  export 'counter/counter_bloc.dart';
-
-3. En el archivo counter_state.dart creamos el estado inicial de la app.
-
-  part of 'counter_bloc.dart';
-
-  class CounterState extends Equatable {
-    final int counterValue;
-    const CounterState({required this.counterValue});
-
-    @override
-    List<Object> get props => [counterValue];
-  }
-
-  class CounterInitial extends CounterState {
-    const CounterInitial() : super(counterValue: 0);
-  }
-
-4. En el archivo counter_event.dart creamos los eventos que vamos a usar.
-
-  part of 'counter_bloc.dart';  
-
-  abstract class CounterEvent {}
-
-  class CounterIncrementEvent extends CounterEvent {}
-
-  class CounterDecrementEvent extends CounterEvent {}
-
-5. En el archivo counter_bloc.dart convertimos los estados a eventos:
+1. En la carpeta bloc/ creamos un archivo llamado my_bloc_observer.dart e implementamos las funciones así:
 
   import 'package:bloc/bloc.dart';
-  import 'package:equatable/equatable.dart';
 
-  part 'counter_event.dart';
-  part 'counter_state.dart';
+  class MyBlocObserver extends BlocObserver {
+    @override
+    void onEvent(Bloc bloc, Object? event) {
+      super.onEvent(bloc, event);
+      print('${bloc.runtimeType}');
+    }
 
-  class CounterBloc extends Bloc<CounterEvent, CounterState> {
-    CounterBloc() : super(const CounterInitial()) {
-      on<CounterDecrementEvent>((event, emit) {
-        emit(CounterState(counterValue: state.counterValue - 1));
-      });
-      on<CounterIncrementEvent>((event, emit) {
-        emit(CounterState(counterValue: state.counterValue + 1));
-      });
+    @override
+    void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+      super.onError(bloc, error, stackTrace);
+      print(error);
+    }
+
+    @override
+    void onChange(BlocBase bloc, Change change) {
+      super.onChange(bloc, change);
+      print(change);
+    }
+
+    @override
+    void onTransition(Bloc bloc, Transition transition) {
+      super.onTransition(bloc, transition);
+      print(transition);
     }
   }
 
-6. Luego, en el archivo main.dart envolvemos el widget MaterialApp con BlocProvider para usar el CounterBloc y hacerlo
-disponible para toda la app:
-
-  import 'package:flutter/material.dart';
-
-  import 'bloc/bloc_imports.dart';
-  import 'screen/home_screen.dart';
+2. En el archivo main.dart, vamos a cambiar la funcion msin para poder usar el observer creado anteriormente:
 
   void main() {
+    Bloc.observer = MyBlocObserver();
     runApp(const MyApp());
   }
 
-  class MyApp extends StatelessWidget {
-    const MyApp({super.key});
+3. En el archivo bloc:imports.dart, agregamos la exportación de my_bloc_observer:
 
-    @override
-    Widget build(BuildContext context) {
-      return BlocProvider(
-        create: (context) => CounterBloc(),
-        child: MaterialApp(
-          title: 'Counter Bloc',
-          theme: ThemeData(primaryColor: Colors.blue),
-          home: const HomeScreen(),
-        ),
-      );
-    }
-  }
+  export 'package:counter_app_bloc/bloc/my_bloc_observer.dart';
 
-7. Y despues, en el home_screen.dart envolvemos el texto o widget el cual queremos mostrar y actualizar el estado con
-uno llamado BlocBuilder y que use el ConterBloc y CounterState:
+4. Ya en la consola de depuración, aparece los mensajes del observer cuando se hace clic en los botones:
 
-  Container(
-    child: Center(child: BlocBuilder<CounterBloc, CounterState>(
-      builder: (context, state) {
-        return Text(
-          'Counter value: ${state.counterValue}',
-          style: const TextStyle(
-              fontSize: 20, fontWeight: FontWeight.bold),
-        );
-      },
-    )),
-  ),
-
-8. Para que los botones llamen los eventos que increment y decremento, toca llamarlos así:
-
-  child: ElevatedButton.icon(
-    onPressed: () => context
-        .read<CounterBloc>()
-        .add(CounterDecrementEvent()),
-    icon: const Icon(Icons.remove),
-    label: const Text('Decrease'),
-  ),
-
-  child: ElevatedButton.icon(
-    onPressed: () => context
-        .read<CounterBloc>()
-        .add(CounterIncrementEvent()),
-    icon: const Icon(Icons.add),
-    label: const Text('Increase'),
-  ),
+  I/flutter ( 5753): CounterBloc
+  I/flutter ( 5753): Transition { currentState: CounterInitial(0), event: Instance of 'CounterIncrementEvent', nextState: CounterState(1) }
+  I/flutter ( 5753): Change { currentState: CounterInitial(0), nextState: CounterState(1) }
 
