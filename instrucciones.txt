@@ -1,49 +1,33 @@
-APRENDER A AÑADIR LISTENERS
-================================
+APRENDER A COMBINAR BLOC_BUILDER CON BLOC_LISTENER
+===================================================
 
-1. En el home_screen.dart, envolvemos el BlocBuilder con el BlocListener.
+1. En el home_screen.dart, cortamos el listener y lo colocamos dentro del BlocBuilder y luego cambiamos el BlocBuilder
+por BlocConsumer:
 
-2. En el counter_state.dart, necesitamos separar los estados en estado Increment y el estado Decrement,
-Para que podamos escuchar cuándo se emite el estado. Para eso añadimos dos clases para manejar el 
-IncrementState y el DecrementState:
+child: Center(
+  child: BlocConsumer<CounterBloc, CounterState>(
+    listener: (context, state) {
+      if (state is IncrementState) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Successfully increased'),
+          duration: Duration(milliseconds: 300),
+        ));
+      } else if (state is DecrementState) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Successfully decreased'),
+          duration: Duration(milliseconds: 300),
+        ));
+      }
+    },
+    builder: (context, state) {
+      return Text(
+        'Counter value: ${state.counterValue}',
+        style: const TextStyle(
+            fontSize: 20, fontWeight: FontWeight.bold),
+      );
+    },
+  ),
+)),
 
-  :
-  :
-  class IncrementState extends CounterState {
-    const IncrementState(int increasedValue) : super(counterValue: increasedValue);
-  }
 
-  class DecrementState extends CounterState {
-    const DecrementState(int decreasedValue) : super(counterValue: decreasedValue);
-  }
 
-3. En el counter_bloc.dart emitimos los Estados creados (IncrementState y DecrementState):
-
-  class CounterBloc extends Bloc<CounterEvent, CounterState> {
-    CounterBloc() : super(const CounterInitial()) {
-      on<CounterDecrementEvent>((event, emit) {
-        emit(DecrementState(state.counterValue - 1));
-      });
-      on<CounterIncrementEvent>((event, emit) {
-        emit(IncrementState(state.counterValue + 1));
-      });
-    }
-  }
-
-4. En el home_screen.dart, implementamos el bloc_listener
-
-  listener: (context, state) {
-    if (state is IncrementState) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Successfully increased'),
-        duration: Duration(milliseconds: 300),
-      ));
-    } else if (state is DecrementState) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Successfully decreased'),
-        duration: Duration(milliseconds: 300),
-      ));
-    }
-  },
-
-5. 

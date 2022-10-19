@@ -17,8 +17,8 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              child: Center(
-                  child: BlocListener<CounterBloc, CounterState>(
+                child: Center(
+              child: BlocConsumer<CounterBloc, CounterState>(
                 listener: (context, state) {
                   if (state is IncrementState) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -32,17 +32,15 @@ class HomeScreen extends StatelessWidget {
                     ));
                   }
                 },
-                child: BlocBuilder<CounterBloc, CounterState>(
-                  builder: (context, state) {
-                    return Text(
-                      'Counter value: ${state.counterValue}',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    );
-                  },
-                ),
-              )),
-            ),
+                builder: (context, state) {
+                  return Text(
+                    'Counter value: ${state.counterValue}',
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
+                  );
+                },
+              ),
+            )),
             const SizedBox(
               height: 20,
             ),
