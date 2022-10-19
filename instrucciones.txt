@@ -1,226 +1,115 @@
 UTILIZAR BLOC BUILDER
 =====================
-main.dart
-----------
 
-void main() {
-  runApp(const myApp());
-}
+1. Creamos un bloc llamado counter y colocamos los 3 archivos en una carpeta dentro de bloc/ llamada counter.
+2. En la carpeta bloc/ creamos un archivo llamado bloc_imports, para manejar las exportaciones que necesitemos de bloc.
 
-home_page.dart
---------------
+  export 'package:flutter_bloc/flutter_bloc.dart';
+  export 'counter/counter_bloc.dart';
 
-child: BlocBuilder<CounterBloc, CounterState>(
-                    builder: (context, state) {
-                      return Text(
-                        'Counter value: ${state.counterValue}',
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
+3. En el archivo counter_state.dart creamos el estado inicial de la app.
 
+  part of 'counter_bloc.dart';
 
-AÑADIR UN OBSERVADOR
-====================
+  class CounterState extends Equatable {
+    final int counterValue;
+    const CounterState({required this.counterValue});
 
-mybloc_observer.dart
-------------------
-
-import 'package:counter_app_bloc/bloc/bloc_imports.dart';
-import 'package:bloc/bloc.dart';
-
-//para construir esta base, usamos el shortcut 'blocobserver'
-
-class MyBlocObserver extends BlocObserver {
-  @override
-  void onEvent(Bloc bloc, Object? event) {
-    super.onEvent(bloc, event);
-    print('${bloc.runtimeType} $event');
+    @override
+    List<Object> get props => [counterValue];
   }
 
-  @override
-  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
-    super.onError(bloc, error, stackTrace);
-    print(error);
+  class CounterInitial extends CounterState {
+    const CounterInitial() : super(counterValue: 0);
   }
 
-  @override
-  void onChange(BlocBase bloc, Change change) {
-    super.onChange(bloc, change);
-    print(change);
+4. En el archivo counter_event.dart creamos los eventos que vamos a usar.
+
+  part of 'counter_bloc.dart';  
+
+  abstract class CounterEvent {}
+
+  class CounterIncrementEvent extends CounterEvent {}
+
+  class CounterDecrementEvent extends CounterEvent {}
+
+5. En el archivo counter_bloc.dart convertimos los estados a eventos:
+
+  import 'package:bloc/bloc.dart';
+  import 'package:equatable/equatable.dart';
+
+  part 'counter_event.dart';
+  part 'counter_state.dart';
+
+  class CounterBloc extends Bloc<CounterEvent, CounterState> {
+    CounterBloc() : super(const CounterInitial()) {
+      on<CounterDecrementEvent>((event, emit) {
+        emit(CounterState(counterValue: state.counterValue - 1));
+      });
+      on<CounterIncrementEvent>((event, emit) {
+        emit(CounterState(counterValue: state.counterValue + 1));
+      });
+    }
   }
 
-  @override
-  void onTransition(Bloc bloc, Transition transition) {
-    super.onTransition(bloc, transition);
-    print(transition);
-  }
-}
+6. Luego, en el archivo main.dart envolvemos el widget MaterialApp con BlocProvider para usar el CounterBloc y hacerlo
+disponible para toda la app:
 
-main.dart
----------
+  import 'package:flutter/material.dart';
 
-void main() {
-  BlocOverrides.runZoned(
-     () => runApp(const MyApp()),
-     blocObserver: MyBlocObserver(),
-  );
-}
+  import 'bloc/bloc_imports.dart';
+  import 'screen/home_screen.dart';
 
-
-UTILIZAR BLOC BUILDER Y BLOC LISTENER SEPARADAMENTE
-===================================================
-
-main.dart
----------
-
-void main() {
-  BlocOverrides.runZoned(
-     () => runApp(const MyApp()),
-     blocObserver: MyBlocObserver(),
-  );
-}
-
-counter_state.dart
-------------------
-part of 'counter_bloc.dart';
-
-class CounterState extends Equatable {
-  final int counterValue;
-  const CounterState({required this.counterValue});
-
-  @override
-  List<Object> get props => [counterValue];
-}
-
-class CounterInitial extends CounterState {
-  const CounterInitial() : super(counterValue: 0);
-}
-
-// New
-class IncrementState extends CounterState {
-  const IncrementState(int increasedValue)
-      : super(counterValue: increasedValue);
-}
-
-// New
-class DecrementState extends CounterState {
-  const DecrementState(int decreasedValue)
-      : super(counterValue: decreasedValue);
-}
-
-
-home_page.dart
---------------
-
-Center(
-                child: BlocListener<CounterBloc, CounterState>(
-                  listener: (context, state) {
-                    if (state is IncrementState) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Successfully Increased'),
-                        duration: Duration(milliseconds: 300),
-                      ));
-                    } else if (state is DecrementState) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Successfully Decreased'),
-                        duration: Duration(milliseconds: 300),
-                      ));
-                    }
-                  },
-                  child: BlocBuilder<CounterBloc, CounterState>(
-                    builder: (context, state) {
-                      return Text(
-                        'Counter value: ${state.counterValue}',
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-UTILIZAR BLOC CONSUMER PARA COMBINAR BLOC BUILDER CON BLOC LISTENER
-===================================================================
-
-// Cambiamos BlocListener por BlocConsumer y el listener lo colocamos adentro del BlocConsumer.
-Center(
-                child: BlocConsumer<CounterBloc, CounterState>(
-                  listener: (context, state) {
-                    if (state is IncrementState) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Successfully Increased'),
-                        duration: Duration(milliseconds: 300),
-                      ));
-                    } else if (state is DecrementState) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Successfully Decreased'),
-                        duration: Duration(milliseconds: 300),
-                      ));
-                    }
-                  },
-                  builder: (context, state) {
-                    return Text(
-                      'Counter value: ${state.counterValue}',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    );
-                  },
-                ),
-              ),
-
-UTILIZAR HYDRATED_BLOC PARA ALMACENAR EL ESTADO EN EL DISPOSITIVO
-=================================================================
-
-pubspec.yaml
-------------
-hydrated_bloc: ^8.1.0
-path_provider: ^2.0.11
-
-main.dart
----------
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Hydrated_bloc
-
-  final storage = await HydratedStorage.build(
-      storageDirectory:
-          await getApplicationDocumentsDirectory()); //Hydrated_bloc
-
-  HydratedBlocOverrides.runZoned(
-    () => runApp(const MyApp()),
-    blocObserver: MyBlocObserver(),
-    storage: storage,
-  );
-
-  runApp(const MyApp());
-}
-
-counter_state.dart
-------------------
-Nos colocamos encima del nombre de la clase llamada CounterState y presionamos CTRL + . y escogemos la
-opcion "Generate JSON Serialization".
-
-Borramos lineas innecesarias como las siguientes:
-
-* import 'dart:convert';
-* String toJson() => json.encode(toMap());
-* factory CounterState.fromJson(String source) => CounterState.fromMap(json.decode(source) as Map<String, dynamic>);
-
-counter_bloc.dart
------------------
-* CounterBloc va a extender ahora de HydratedBloc, entonces cambiamos Bloc por HydratedBloc.
-* Resolvemos las dependencias necesarias de CounterBloc y las configuramos así:
-
-@override
-  CounterState? fromJson(Map<String, dynamic> json) {
-    return CounterState.fromMap(json);
+  void main() {
+    runApp(const MyApp());
   }
 
-  @override
-  Map<String, dynamic>? toJson(CounterState state) {
-    return state.toMap();
+  class MyApp extends StatelessWidget {
+    const MyApp({super.key});
+
+    @override
+    Widget build(BuildContext context) {
+      return BlocProvider(
+        create: (context) => CounterBloc(),
+        child: MaterialApp(
+          title: 'Counter Bloc',
+          theme: ThemeData(primaryColor: Colors.blue),
+          home: const HomeScreen(),
+        ),
+      );
+    }
   }
 
+7. Y despues, en el home_screen.dart envolvemos el texto o widget el cual queremos mostrar y actualizar el estado con
+uno llamado BlocBuilder y que use el ConterBloc y CounterState:
+
+  Container(
+    child: Center(child: BlocBuilder<CounterBloc, CounterState>(
+      builder: (context, state) {
+        return Text(
+          'Counter value: ${state.counterValue}',
+          style: const TextStyle(
+              fontSize: 20, fontWeight: FontWeight.bold),
+        );
+      },
+    )),
+  ),
+
+8. Para que los botones llamen los eventos que increment y decremento, toca llamarlos así:
+
+  child: ElevatedButton.icon(
+    onPressed: () => context
+        .read<CounterBloc>()
+        .add(CounterDecrementEvent()),
+    icon: const Icon(Icons.remove),
+    label: const Text('Decrease'),
+  ),
+
+  child: ElevatedButton.icon(
+    onPressed: () => context
+        .read<CounterBloc>()
+        .add(CounterIncrementEvent()),
+    icon: const Icon(Icons.add),
+    label: const Text('Increase'),
+  ),
 

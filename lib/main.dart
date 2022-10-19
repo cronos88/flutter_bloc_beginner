@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'bloc/bloc_imports.dart';
 import 'screen/home_screen.dart';
 
 void main() {
@@ -14,10 +15,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Counter Bloc',
-      theme: ThemeData(primaryColor: Colors.blue),
-      home: const HomeScreen(),
+    return BlocProvider(
+      create: (context) => CounterBloc(),
+      child: MaterialApp(
+        title: 'Counter Bloc',
+        theme: ThemeData(primaryColor: Colors.blue),
+        home: const HomeScreen(),
+      ),
     );
   }
 }
