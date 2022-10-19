@@ -1,50 +1,49 @@
-APRENDER A DEBUGEAR LOS ESTADOS
+APRENDER A AÑADIR LISTENERS
 ================================
 
-1. En la carpeta bloc/ creamos un archivo llamado my_bloc_observer.dart e implementamos las funciones así:
+1. En el home_screen.dart, envolvemos el BlocBuilder con el BlocListener.
 
-  import 'package:bloc/bloc.dart';
+2. En el counter_state.dart, necesitamos separar los estados en estado Increment y el estado Decrement,
+Para que podamos escuchar cuándo se emite el estado. Para eso añadimos dos clases para manejar el 
+IncrementState y el DecrementState:
 
-  class MyBlocObserver extends BlocObserver {
-    @override
-    void onEvent(Bloc bloc, Object? event) {
-      super.onEvent(bloc, event);
-      print('${bloc.runtimeType}');
-    }
+  :
+  :
+  class IncrementState extends CounterState {
+    const IncrementState(int increasedValue) : super(counterValue: increasedValue);
+  }
 
-    @override
-    void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
-      super.onError(bloc, error, stackTrace);
-      print(error);
-    }
+  class DecrementState extends CounterState {
+    const DecrementState(int decreasedValue) : super(counterValue: decreasedValue);
+  }
 
-    @override
-    void onChange(BlocBase bloc, Change change) {
-      super.onChange(bloc, change);
-      print(change);
-    }
+3. En el counter_bloc.dart emitimos los Estados creados (IncrementState y DecrementState):
 
-    @override
-    void onTransition(Bloc bloc, Transition transition) {
-      super.onTransition(bloc, transition);
-      print(transition);
+  class CounterBloc extends Bloc<CounterEvent, CounterState> {
+    CounterBloc() : super(const CounterInitial()) {
+      on<CounterDecrementEvent>((event, emit) {
+        emit(DecrementState(state.counterValue - 1));
+      });
+      on<CounterIncrementEvent>((event, emit) {
+        emit(IncrementState(state.counterValue + 1));
+      });
     }
   }
 
-2. En el archivo main.dart, vamos a cambiar la funcion msin para poder usar el observer creado anteriormente:
+4. En el home_screen.dart, implementamos el bloc_listener
 
-  void main() {
-    Bloc.observer = MyBlocObserver();
-    runApp(const MyApp());
-  }
+  listener: (context, state) {
+    if (state is IncrementState) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Successfully increased'),
+        duration: Duration(milliseconds: 300),
+      ));
+    } else if (state is DecrementState) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Successfully decreased'),
+        duration: Duration(milliseconds: 300),
+      ));
+    }
+  },
 
-3. En el archivo bloc:imports.dart, agregamos la exportación de my_bloc_observer:
-
-  export 'package:counter_app_bloc/bloc/my_bloc_observer.dart';
-
-4. Ya en la consola de depuración, aparece los mensajes del observer cuando se hace clic en los botones:
-
-  I/flutter ( 5753): CounterBloc
-  I/flutter ( 5753): Transition { currentState: CounterInitial(0), event: Instance of 'CounterIncrementEvent', nextState: CounterState(1) }
-  I/flutter ( 5753): Change { currentState: CounterInitial(0), nextState: CounterState(1) }
-
+5. 
